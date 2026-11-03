@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MarSeguro: protótipo</title>
+<style>
+:root{--bg:#f6f1e4;--surf:#fffdf8;--ink:#12303d;--mut:#4f646d;--line:#d9cfb8;--sea:#0f4c63;--alert:#6d34b8;--alert-bg:#f1e9fb;--gone:#6f787d;--gone-bg:#ecebe6;--warn:#7a4e00;--warn-bg:#fff2cc;--ok:#0b6b4a;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c1f28;--surf:#12303d;--ink:#eaf2f4;--mut:#9db3bb;--line:#285063;--sea:#5fb4cf;--alert:#c8a2f5;--alert-bg:#2a1f3d;--gone:#9aa5aa;--gone-bg:#1c2b32;--warn:#f2c35b;--warn-bg:#3a2e12;--ok:#6fd3a8;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0c1f28;--surf:#12303d;--ink:#eaf2f4;--mut:#9db3bb;--line:#285063;--sea:#5fb4cf;--alert:#c8a2f5;--alert-bg:#2a1f3d;--gone:#9aa5aa;--gone-bg:#1c2b32;--warn:#f2c35b;--warn-bg:#3a2e12;--ok:#6fd3a8;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Trebuchet MS",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:560px;margin:0 auto;padding:16px 14px 40px}
+h1,h2{font-family:Georgia,"Times New Roman",serif;margin:0}
+h1{font-size:2rem;letter-spacing:-.01em}
+h2{font-size:1.15rem;margin-bottom:8px}
+.sub{color:var(--mut);margin:2px 0 14px}
+.abas{display:flex;gap:6px;border-bottom:2px solid var(--line);margin-bottom:14px}
+.abas button{flex:1;min-height:44px;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;color:var(--mut);font:inherit;font-weight:600;cursor:pointer}
+.abas button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--sea)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.mapa{width:100%;height:auto;border:1px solid var(--line);border-radius:10px;display:block;background:var(--surf)}
+.mar{fill:var(--sea);opacity:.2}.areia{fill:var(--line);opacity:.55}
+.legenda{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.85rem;color:var(--mut);margin:8px 0 4px}
+.legenda i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px;border:2px solid}
+.cartao{border:2px solid var(--line);border-radius:8px;padding:12px;margin-top:10px;background:var(--surf)}
+.cartao p{margin:4px 0 6px}
+.cartao.ativo{border-color:var(--alert);background:var(--alert-bg)}
+.cartao.vencido{border-color:var(--gone);background:var(--gone-bg);color:var(--gone)}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+label{display:block;font-weight:600;margin:10px 0 4px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;min-height:44px}
+textarea{min-height:84px;resize:vertical}
+.btn{min-height:44px;padding:0 16px;border-radius:8px;border:2px solid var(--sea);background:var(--sea);color:#fff;font:inherit;font-weight:700;cursor:pointer;margin:12px 8px 0 0}
+:root[data-theme="dark"] .btn,:root:not([data-theme="light"]) .btn{color:#06222e}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .btn{color:#fff}}
+.btn.sec{background:none;color:var(--ink);border-color:var(--line)}
+.btn.perigo{background:none;color:var(--alert);border-color:var(--alert);min-height:40px;margin-top:6px}
+.aviso{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:10px 12px;margin:10px 0 0;font-size:.92rem}
+.aviso ul{margin:4px 0 0;padding-left:18px}
+.nota{color:var(--mut);font-size:.88rem;margin:6px 0 0}
+#msg{min-height:1.4em;color:var(--ok);font-weight:600;margin:0 0 8px}
+.sos{margin-top:16px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-size:.92rem}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <h1>MarSeguro</h1>
+  <p class="sub">Protótipo com praia de teste. Dados e posições fictícios.</p>
+
+  <div class="abas" role="tablist">
+    <button role="tab" id="aba-publico" aria-selected="true">Banhistas</button>
+    <button role="tab" id="aba-painel" aria-selected="false">Guarda-vidas</button>
+  </div>
+
+  <section id="vista-publico">
+    <svg id="mapa" class="mapa" viewBox="0 0 600 340" role="img" aria-label="Mapa esquemático da praia com os quatro trechos"></svg>
+    <div class="legenda">
+      <span><i style="border-color:var(--alert);background:var(--alert-bg)"></i>Alerta ativo</span>
+      <span><i style="border-color:var(--gone);border-style:dashed"></i>Alerta vencido</span>
+      <span><i style="border-color:var(--mut)"></i>Sem alerta (não significa mar seguro)</span>
+    </div>
+    <h2 style="margin-top:14px">Alertas</h2>
+    <div id="lista-publica"></div>
+    <p class="nota">Ausência de alerta não significa que o mar está seguro.</p>
+    <div class="sos">Emergência na praia: ligue 193 (Bombeiros) ou procure a equipe de salvamento.</div>
+  </section>
+
+  <section id="vista-painel" hidden>
+    <p id="msg" role="status" aria-live="polite"></p>
+
+    <div class="card">
+      <h2>Nota do guarda-vidas</h2>
+      <label for="nota">Escreva do seu jeito, em poucas palavras</label>
+      <textarea id="nota" placeholder="Ex.: corrente forte no trecho 2 até 17h"></textarea>
+      <button class="btn" id="gerar">Gerar rascunho</button>
+      <p class="nota">IA simulada neste protótipo: regras simples no navegador, sem chamar nenhum modelo. Na versão real, esta etapa chama um modelo de IA no servidor. Nada vai ao site sem a sua aprovação.</p>
+    </div>
+
+    <div class="card" id="rascunho" hidden></div>
+
+    <div class="card">
+      <h2>Alertas no site</h2>
+      <div id="lista-painel"></div>
+      <button class="btn sec" id="restaurar">Restaurar exemplos</button>
+    </div>
+    <p class="nota">Protótipo sem login. Na versão real, só a equipe de salvamento entra neste painel.</p>
+  </section>
+</main>
+
+<script>
+const KEY = "marseguro-proto-v2";
+const RISCOS = {
+  "Corrente de retorno": "Pode levar a pessoa para longe da praia. Evite entrar na água.",
+  "Ondas fortes": "Ondas podem derrubar e arrastar banhistas.",
+  "Água-viva": "Há risco de queimaduras. Evite contato e procure a equipe de salvamento.",
+  "Buracos e pedras no fundo do mar": "Há risco de queda e acidentes. Evite e procure a equipe de salvamento."
+};
+const POS = {1:[-3.7180,-38.5170], 2:[-3.7190,-38.5150], 3:[-3.7200,-38.5130], 4:[-3.7210,-38.5110]};
+const $ = id => document.getElementById(id);
+const esc = t => { const d = document.createElement("div"); d.textContent = t; return d.innerHTML; };
+const escA = t => esc(t).replace(/"/g, "&quot;");
+const pad = n => String(n).padStart(2, "0");
+const fmt = iso => new Date(iso).toLocaleString("pt-BR", {dateStyle:"short", timeStyle:"short", timeZone:"America/Fortaleza"});
+const toLocalInput = iso => new Date(new Date(iso).getTime() - 3*3600e3).toISOString().slice(0,16);
+const fromLocalInput = v => new Date(v + ":00-03:00").toISOString();
+
+function seed() {
+  const h = 3600e3, n = Date.now(), iso = ms => new Date(n + ms).toISOString();
+  return [
+    {id:1, trecho:1, risco:"Corrente de retorno", explicacao:RISCOS["Corrente de retorno"], validoAte:iso(5*h), estado:"publicado"},
+    {id:2, trecho:2, risco:"Ondas fortes", explicacao:RISCOS["Ondas fortes"], validoAte:iso(-2*h), estado:"publicado"},
+    {id:3, trecho:3, risco:"Água-viva", explicacao:RISCOS["Água-viva"], validoAte:iso(3*h), estado:"publicado"},
+    {id:4, trecho:4, risco:"Buracos e pedras no fundo do mar", explicacao:RISCOS["Buracos e pedras no fundo do mar"], validoAte:iso(26*h), estado:"publicado"}
+  ];
+}
+function load() {
+  try { const v = JSON.parse(localStorage.getItem(KEY)); if (Array.isArray(v)) return v; } catch (e) {}
+  return seed();
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(alertas)); } catch (e) {} }
+let alertas = load();
+
+const status = a => new Date(a.validoAte) > new Date() ? "ativo" : "vencido";
+const statusTxt = a => status(a) === "ativo" ? "Válido até " + fmt(a.validoAte) : "Vencido: não representa a condição atual";
+
+function renderPublico() {
+  const pub = alertas.filter(a => a.estado === "publicado");
+  const ord = [...pub].sort((x, y) => (status(x) === "ativo" ? 0 : 1) - (status(y) === "ativo" ? 0 : 1) || x.trecho - y.trecho);
+
+  let svg = '<polygon class="mar" points="0,0 600,0 600,320 0,20"/><polygon class="areia" points="0,20 600,320 600,340 0,340"/>';
+  for (let t = 1; t <= 4; t++) {
+    const [la, lo] = POS[t];
+    const x = 60 + (lo + 38.5170) / 0.006 * 480, y = 50 + (-3.7180 - la) / 0.003 * 240;
+    const doTrecho = pub.filter(a => a.trecho === t);
+    const a = doTrecho.find(z => status(z) === "ativo") || doTrecho[doTrecho.length - 1];
+    let c = 'stroke="var(--mut)" stroke-width="1.5" fill="none" r="14"';
+    if (a && status(a) === "ativo") c = 'stroke="var(--alert)" stroke-width="3" fill="var(--alert)" fill-opacity=".25" r="20"';
+    else if (a) c = 'stroke="var(--gone)" stroke-width="2" stroke-dasharray="5 4" fill="none" r="20"';
+    svg += '<circle cx="' + x + '" cy="' + y + '" ' + c + '/><text x="' + x + '" y="' + (y + 38) + '" text-anchor="middle" font-size="14" fill="var(--ink)">Trecho ' + t + '</text>';
+  }
+  $("mapa").innerHTML = svg;
+
+  $("lista-publica").innerHTML = ord.length
+    ? ord.map(a => '<article class="cartao ' + status(a) + '"><strong>Trecho ' + a.trecho + ": " + esc(a.risco) + "</strong><p>" + esc(a.explicacao) + "</p><small>" + statusTxt(a) + "</small></article>").join("")
+    : '<p class="nota">Nenhum alerta publicado agora. Isso não significa que o mar está seguro.</p>';
+}
+
+function renderPainel() {
+  const vis = alertas.filter(a => a.estado === "publicado");
+  $("lista-painel").innerHTML = vis.length
+    ? vis.map(a => '<article class="cartao ' + status(a) + '"><strong>Trecho ' + a.trecho + ": " + esc(a.risco) + "</strong><br><small>" + statusTxt(a) + '</small><br><button class="btn perigo" data-id="' + a.id + '">Cancelar alerta</button></article>').join("")
+    : '<p class="nota">Nenhum alerta no site.</p>';
+}
+function renderTudo() { renderPublico(); renderPainel(); }
+
+function aviso(t) { $("msg").textContent = t; clearTimeout(aviso.t); aviso.t = setTimeout(() => { $("msg").textContent = ""; }, 5000); }
+
+function gerar() {
+  const nota = $("nota").value.trim();
+  if (!nota) { aviso("Escreva uma nota antes de gerar o rascunho."); return; }
+  const n = nota.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const flags = [];
+  const mt = n.match(/trecho\s*(\d)/);
+  const trecho = mt && POS[mt[1]] ? +mt[1] : "";
+  if (!trecho) flags.push("Não identifiquei o trecho. Escolha um.");
+
+  const achados = [];
+  if (/corrente|retorno/.test(n)) achados.push("Corrente de retorno");
+  if (/viva|medusa|caravela/.test(n)) achados.push("Água-viva");
+  if (/onda/.test(n)) achados.push("Ondas fortes");
+  if (/pedra|buraco|fundo/.test(n)) achados.push("Buracos e pedras no fundo do mar");
+  const risco = achados[0] || "";
+  if (!achados.length) flags.push("Não identifiquei o risco. Descreva-o abaixo.");
+  if (achados.length > 1) flags.push("Você citou mais de um risco. Publique um alerta por risco.");
+
+  let valid;
+  const mh = n.match(/\bate\s+(?:as\s+)?(\d{1,2})(?:h|:)?(\d{2})?/);
+  if (mh && +mh[1] <= 23) {
+    const ymd = new Date(Date.now() - 3*3600e3).toISOString().slice(0, 10);
+    valid = new Date(ymd + "T" + pad(+mh[1]) + ":" + pad(mh[2] ? +mh[2] : 0) + ":00-03:00");
+    if (valid <= new Date()) flags.push("O horário informado já passou hoje. Ajuste a validade.");
+  } else {
+    valid = new Date(Date.now() + 3*3600e3);
+    flags.push("Não encontrei o horário de validade. Sugeri 3 horas a partir de agora.");
+  }
+  mostrarRascunho({trecho, risco, explicacao: RISCOS[risco] || "", validoAte: valid.toISOString()}, flags);
+}
+
+function mostrarRascunho(r, flags) {
+  const opts = [1,2,3,4].map(t => '<option value="' + t + '"' + (r.trecho === t ? " selected" : "") + ">Trecho " + t + "</option>").join("");
+  const dl = Object.keys(RISCOS).map(k => '<option value="' + escA(k) + '">').join("");
+  $("rascunho").innerHTML =
+    "<h2>Revisar rascunho</h2>" +
+    '<p class="nota">Rascunho gerado por IA simulada. Confira e corrija antes de publicar.</p>' +
+    (flags.length ? '<div class="aviso"><ul>' + flags.map(f => "<li>" + esc(f) + "</li>").join("") + "</ul></div>" : "") +
+    '<label for="f-trecho">Trecho</label><select id="f-trecho"><option value="">Escolha o trecho</option>' + opts + "</select>" +
+    '<label for="f-risco">Risco</label><input id="f-risco" list="riscos" value="' + escA(r.risco) + '"><datalist id="riscos">' + dl + "</datalist>" +
+    '<label for="f-expl">Explicação para os banhistas</label><textarea id="f-expl">' + esc(r.explicacao) + "</textarea>" +
+    '<label for="f-valid">Válido até (horário local)</label><input id="f-valid" type="datetime-local" value="' + toLocalInput(r.validoAte) + '">' +
+    '<button class="btn" id="pub">Publicar alerta</button><button class="btn sec" id="desc">Descartar rascunho</button>';
+  $("rascunho").hidden = false;
+}
+
+function publicar() {
+  const trecho = +$("f-trecho").value, risco = $("f-risco").value.trim(), explicacao = $("f-expl").value.trim(), v = $("f-valid").value;
+  if (!trecho) return aviso("Escolha o trecho.");
+  if (!risco) return aviso("Informe o risco.");
+  if (!explicacao) return aviso("Escreva a explicação para os banhistas.");
+  if (!v || isNaN(new Date(v + ":00-03:00"))) return aviso("Informe até quando o alerta vale.");
+  const validoAte = fromLocalInput(v);
+  if (new Date(validoAte) <= new Date()) return aviso("A validade já passou. Escolha um horário futuro.");
+  alertas.push({id: Date.now(), trecho, risco, explicacao, validoAte, estado: "publicado"});
+  save(); descartar(true); $("nota").value = ""; renderTudo(); aviso("Alerta publicado.");
+}
+function descartar(silencioso) { $("rascunho").hidden = true; $("rascunho").innerHTML = ""; if (silencioso !== true) aviso("Rascunho descartado."); }
+
+$("gerar").addEventListener("click", gerar);
+$("rascunho").addEventListener("click", e => { if (e.target.id === "pub") publicar(); if (e.target.id === "desc") descartar(); });
+$("lista-painel").addEventListener("click", e => {
+  const id = e.target.dataset && e.target.dataset.id;
+  if (!id) return;
+  const a = alertas.find(z => String(z.id) === id);
+  if (a) { a.estado = "cancelado"; save(); renderTudo(); aviso("Alerta cancelado."); }
+});
+$("restaurar").addEventListener("click", () => { alertas = seed(); save(); descartar(true); renderTudo(); aviso("Exemplos restaurados."); });
+
+function vista(nome) {
+  const painel = nome === "painel";
+  $("vista-publico").hidden = painel; $("vista-painel").hidden = !painel;
+  $("aba-publico").setAttribute("aria-selected", String(!painel));
+  $("aba-painel").setAttribute("aria-selected", String(painel));
+}
+$("aba-publico").addEventListener("click", () => vista("publico"));
+$("aba-painel").addEventListener("click", () => vista("painel"));
+
+window.addEventListener("storage", () => { alertas = load(); renderTudo(); });
+setInterval(renderTudo, 60000);
+renderTudo();
+if (location.hash === "#painel") vista("painel");
+</script>
+</body>
+</html>
